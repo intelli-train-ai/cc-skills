@@ -1,105 +1,116 @@
 # 插件安装指南
 
-## 前置条件
+> 这份指南会一步步教你如何安装和使用插件，即使你是第一次接触也没关系，跟着做就行。
 
-- 已安装并完成认证的 [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)
-- Claude Code 版本需支持插件功能
+---
+
+## 在开始之前，你需要准备什么？
+
+1. **安装 Claude Code**：Claude Code 是一个在终端（就是电脑上那个黑色的命令行窗口）里运行的 AI 编程助手。如果你还没有安装，请先参考 [官方安装指南](https://docs.anthropic.com/en/docs/claude-code) 完成安装和登录。
+2. **确认版本**：你的 Claude Code 需要是支持插件功能的较新版本。
+
+---
 
 ## 第一步：添加插件市场
+
+打开 Claude Code 后，输入下面这行命令，然后按回车：
 
 ```
 /plugin marketplace add intelli-train-ai/cc-skills
 ```
 
-> 将本仓库注册为 Claude Code 的插件市场源。
+> 这行命令的作用是：告诉 Claude Code "去这个地方找可以安装的插件"，就像在手机上添加了一个应用商店。
 
-## 第二步：安装插件
+---
 
-### 可用插件
+## 第二步：安装你想要的插件
 
-| 插件 | 说明 | 包含技能 |
-|------|------|----------|
-| `document-skills` | 文档处理套件 | Excel、Word、PowerPoint、PDF |
-| `example-skills` | 示例技能合集 | 算法艺术、品牌指南、画布设计、文档协作、前端设计、内部通讯、MCP 构建器、技能创建器、Slack GIF 创建器、主题工厂、Web 构件构建器、Web 应用测试 |
-| `claude-api` | Claude API 与 SDK 文档 | Claude API |
+### 有哪些插件可以装？
 
-### 命令行安装
+| 插件名称 | 用来做什么 | 包含的功能 |
+|----------|-----------|-----------|
+| `document-skills` | 处理办公文档 | Excel 表格、Word 文档、PowerPoint 幻灯片、PDF 文件 |
+| `example-skills` | 各种实用小工具合集 | 算法艺术、品牌指南、画布设计、文档协作、前端设计、内部通讯、MCP 构建器、技能创建器、Slack GIF 创建器、主题工厂、Web 构件构建器、Web 应用测试 |
+| `claude-api` | Claude API 开发文档 | 帮你用 Claude API 写程序 |
+
+### 方法一：直接输入命令安装（推荐）
+
+在 Claude Code 里输入以下命令，选你需要的那个就行：
 
 ```bash
-# 文档处理技能
+# 想处理 Excel、Word、PPT、PDF？装这个：
 /plugin install document-skills@anthropic-agent-skills
 
-# 示例技能
+# 想要各种实用工具？装这个：
 /plugin install example-skills@anthropic-agent-skills
 
-# Claude API 技能
+# 想用 Claude API 开发程序？装这个：
 /plugin install claude-api@anthropic-agent-skills
 ```
 
-### 交互式安装
+> 提示：`#` 开头的是注释说明，不需要输入，只需要输入 `/plugin install ...` 那一行。
 
-1. 运行 `/plugin` 打开插件管理器
-2. 选择 `Browse and install plugins`
+### 方法二：通过菜单安装（更直观）
+
+如果你不想记命令，也可以用菜单来操作：
+
+1. 输入 `/plugin` 然后按回车，会弹出插件管理菜单
+2. 选择 `Browse and install plugins`（浏览并安装插件）
 3. 选择 `anthropic-agent-skills`
-4. 选择想要安装的插件
-5. 选择 `Install now`
+4. 勾选你想要安装的插件
+5. 选择 `Install now`（立即安装）
 
-## 安装范围
+---
 
-插件支持三种安装范围：
+## 安装到哪里？（可选，初学者可以跳过这部分）
 
-| 范围 | 参数 | 配置位置 | 是否共享 | 适用场景 |
-|------|------|----------|----------|----------|
-| **用户级**（默认） | _(无)_ | `~/.claude/` | 否 | 个人使用，对所有项目生效 |
-| **项目级** | `--scope project` | `.claude/settings.json` | 是（Git 跟踪） | 团队共享 |
-| **本地级** | `--scope local` | `.claude/settings.local.json` | 否（Git 忽略） | 仅本人在当前项目使用 |
+插件可以安装在三个不同的"位置"，决定了谁能用、在哪能用：
+
+| 安装位置 | 怎么装 | 效果 |
+|---------|--------|------|
+| **个人全局**（默认） | 直接装，不加任何参数 | 只有你自己能用，但在你所有的项目里都能用 |
+| **项目共享** | 命令末尾加 `--scope project` | 团队里每个人都能用，但只在这个项目里生效 |
+| **仅自己当前项目** | 命令末尾加 `--scope local` | 只有你自己能用，也只在当前项目里生效 |
+
+举个例子：
 
 ```bash
-# 用户级（默认）— 在你的所有项目中可用
+# 默认安装（个人全局）— 最常用，推荐新手使用
 /plugin install document-skills@anthropic-agent-skills
 
-# 项目级 — 通过 Git 与团队共享
+# 安装到项目里，和同事共享
 /plugin install document-skills@anthropic-agent-skills --scope project
 
-# 本地级 — 仅你本人在当前项目可用
+# 只装在当前项目，只有我自己用
 /plugin install document-skills@anthropic-agent-skills --scope local
 ```
 
-优先级：**本地级 > 项目级 > 用户级**
+> 如果你不确定选哪个，直接用默认的就好，不需要加任何参数。
 
-## 使用方式
+---
 
-安装后，在对话中直接提及相关技能即可。示例：
+## 怎么使用已安装的插件？
 
-```
-# PDF
-"使用 PDF 技能提取 report.pdf 中的文本"
+安装好之后，你不需要做任何特别的操作。在和 Claude Code 对话时，直接用自然语言告诉它你想做什么就行了。比如：
 
-# Excel
-"使用 Excel 技能创建一份销售报表"
+- **处理 PDF**："帮我提取 report.pdf 里的文字"
+- **做 Excel 表格**："帮我创建一份销售报表"
+- **写 Word 文档**："帮我生成一份合同"
+- **做 PPT**："帮我做一份项目介绍的幻灯片"
+- **用 Claude API**："帮我用 Claude API 做一个聊天机器人"
+- **建 MCP 服务器**："为我的数据库创建一个 MCP 服务器"
 
-# Word
-"使用 Word 技能生成一份合同文档"
+---
 
-# PowerPoint
-"使用 PowerPoint 技能制作一份项目演示文稿"
-
-# Claude API
-"帮我使用 Claude API 构建一个应用"
-
-# MCP 构建器
-"为我的数据库创建一个 MCP 服务器"
-```
-
-## 插件管理
+## 插件管理：查看、禁用、卸载
 
 ```bash
-# 查看已安装的插件
+# 查看我装了哪些插件
 /plugin
 
-# 禁用插件
+# 暂时不想用某个插件（不删除，只是关掉）
 /plugin disable document-skills@anthropic-agent-skills
 
-# 卸载插件
+# 彻底卸载某个插件
 /plugin uninstall document-skills@anthropic-agent-skills
 ```
