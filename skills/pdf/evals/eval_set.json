@@ -1,0 +1,22 @@
+[
+  {"query": "帮我提取 report.pdf 中的文字", "should_trigger": true},
+  {"query": "把这三个 PDF 合并成一个文件", "should_trigger": true},
+  {"query": "Extract all tables from invoice.pdf", "should_trigger": true},
+  {"query": "Split this PDF into individual pages", "should_trigger": true},
+  {"query": "给这份 PDF 加个水印", "should_trigger": true},
+  {"query": "Rotate the pages of scan.pdf 90 degrees", "should_trigger": true},
+  {"query": "Help me fill out this PDF form", "should_trigger": true},
+  {"query": "Encrypt my document.pdf with a password", "should_trigger": true},
+  {"query": "Convert this scanned PDF to searchable text using OCR", "should_trigger": true},
+  {"query": "Create a PDF from this markdown content", "should_trigger": true},
+  {"query": "Extract images from presentation.pdf", "should_trigger": true},
+  {"query": "Merge resume.pdf and cover_letter.pdf into application.pdf", "should_trigger": true},
+  {"query": "帮我做一份 Excel 销售报表", "should_trigger": false},
+  {"query": "Create a PowerPoint presentation about our Q3 results", "should_trigger": false},
+  {"query": "Write a Python script to sort a list of numbers", "should_trigger": false},
+  {"query": "Help me build a React component for a login form", "should_trigger": false},
+  {"query": "帮我写一个 Word 文档的合同模板", "should_trigger": false},
+  {"query": "Set up a PostgreSQL database for my project", "should_trigger": false},
+  {"query": "Debug this JavaScript error in my web app", "should_trigger": false},
+  {"query": "Create a CSV file from this JSON data", "should_trigger": false}
+]

@@ -94,10 +94,27 @@ def validate_skill(skill_path):
     return True, "Skill is valid!"
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python quick_validate.py <skill_directory>")
-        sys.exit(1)
-    
-    valid, message = validate_skill(sys.argv[1])
-    print(message)
-    sys.exit(0 if valid else 1)
+    import argparse
+    from scripts.utils import add_marketplace_args, resolve_skill_paths_from_args
+
+    parser = argparse.ArgumentParser(description="Quick validation for skills")
+    add_marketplace_args(parser)
+    args = parser.parse_args()
+
+    # Fallback: positional arg for backward compatibility
+    if not args.skill_path and not args.plugin and len(sys.argv) == 2:
+        args.skill_path = sys.argv[1]
+
+    skill_paths = resolve_skill_paths_from_args(args)
+
+    all_valid = True
+    for skill_path in skill_paths:
+        valid, message = validate_skill(skill_path)
+        label = skill_path.name
+        if valid:
+            print(f"[PASS] {label}: {message}")
+        else:
+            print(f"[FAIL] {label}: {message}")
+            all_valid = False
+
+    sys.exit(0 if all_valid else 1)

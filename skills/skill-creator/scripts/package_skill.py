@@ -109,27 +109,31 @@ def package_skill(skill_path, output_dir=None):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python utils/package_skill.py <path/to/skill-folder> [output-directory]")
-        print("\nExample:")
-        print("  python utils/package_skill.py skills/public/my-skill")
-        print("  python utils/package_skill.py skills/public/my-skill ./dist")
-        sys.exit(1)
+    import argparse
+    from scripts.utils import add_marketplace_args, resolve_skill_paths_from_args
 
-    skill_path = sys.argv[1]
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else None
+    parser = argparse.ArgumentParser(description="Package skill(s) into .skill files")
+    add_marketplace_args(parser)
+    parser.add_argument("--output-dir", default=None, help="Output directory for .skill files")
+    args = parser.parse_args()
 
-    print(f"📦 Packaging skill: {skill_path}")
-    if output_dir:
-        print(f"   Output directory: {output_dir}")
-    print()
+    # Fallback: positional arg for backward compatibility
+    if not args.skill_path and not args.plugin and len(sys.argv) >= 2 and not sys.argv[1].startswith("--"):
+        args.skill_path = sys.argv[1]
+        if len(sys.argv) >= 3 and not sys.argv[2].startswith("--"):
+            args.output_dir = sys.argv[2]
 
-    result = package_skill(skill_path, output_dir)
+    skill_paths = resolve_skill_paths_from_args(args)
 
-    if result:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    all_ok = True
+    for skill_path in skill_paths:
+        print(f"Packaging skill: {skill_path.name}")
+        result = package_skill(skill_path, args.output_dir)
+        if not result:
+            all_ok = False
+        print()
+
+    sys.exit(0 if all_ok else 1)
 
 
 if __name__ == "__main__":

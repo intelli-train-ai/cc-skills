@@ -16,7 +16,7 @@ import uuid
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-from scripts.utils import parse_skill_md
+from scripts.utils import add_marketplace_args, parse_skill_md, resolve_skill_path_from_args
 
 
 def find_project_root() -> Path:
@@ -259,7 +259,7 @@ def run_eval(
 def main():
     parser = argparse.ArgumentParser(description="Run trigger evaluation for a skill description")
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON file")
-    parser.add_argument("--skill-path", required=True, help="Path to skill directory")
+    add_marketplace_args(parser)
     parser.add_argument("--description", default=None, help="Override description to test")
     parser.add_argument("--num-workers", type=int, default=10, help="Number of parallel workers")
     parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
@@ -270,11 +270,7 @@ def main():
     args = parser.parse_args()
 
     eval_set = json.loads(Path(args.eval_set).read_text())
-    skill_path = Path(args.skill_path)
-
-    if not (skill_path / "SKILL.md").exists():
-        print(f"Error: No SKILL.md found at {skill_path}", file=sys.stderr)
-        sys.exit(1)
+    skill_path = resolve_skill_path_from_args(args)
 
     name, original_description, content = parse_skill_md(skill_path)
     description = args.description or original_description
