@@ -1,0 +1,20 @@
+[
+  {"query": "帮我创建一个技能，用来自动生成 API 文档", "should_trigger": true},
+  {"query": "I want to create a skill for automating code reviews", "should_trigger": true},
+  {"query": "帮我优化这个 skill 的触发描述", "should_trigger": true},
+  {"query": "run evals on my pdf skill to see how well it works", "should_trigger": true},
+  {"query": "我想改进现有的技能，它在处理表格时效果不好", "should_trigger": true},
+  {"query": "benchmark my skill's performance with variance analysis", "should_trigger": true},
+  {"query": "help me write a SKILL.md for a new data visualization skill", "should_trigger": true},
+  {"query": "帮我评测一下这个技能的效果", "should_trigger": true},
+  {"query": "optimize the description of my skill for better triggering accuracy", "should_trigger": true},
+  {"query": "把我们刚才的工作流变成一个 skill", "should_trigger": true},
+  {"query": "帮我写一个 Python 脚本处理 CSV 文件", "should_trigger": false},
+  {"query": "create a PowerPoint presentation about Q3 results", "should_trigger": false},
+  {"query": "帮我调试这个 React 组件的渲染问题", "should_trigger": false},
+  {"query": "extract text from this PDF document", "should_trigger": false},
+  {"query": "帮我写一封给客户的邮件", "should_trigger": false},
+  {"query": "build an MCP server for my database", "should_trigger": false},
+  {"query": "帮我做一个网站的登录页面", "should_trigger": false},
+  {"query": "merge these two Excel files into one spreadsheet", "should_trigger": false}
+]

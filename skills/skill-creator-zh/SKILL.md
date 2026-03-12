@@ -1,6 +1,6 @@
 ---
 name: skill-creator-zh
-description: 创建新技能、修改和改进现有技能、评测技能效果。当用户想从零开始创建技能、编辑或优化现有技能、运行评测来验证技能效果、通过基准测试分析技能表现的方差、或优化技能的描述以提升触发准确率时，使用此技能。只要用户提到"技能"、"skill"、"创建技能"、"改进技能"、"评测技能"、"优化描述"等关键词，即使没有明确说"使用 skill-creator"，也应该触发此技能。
+description: Create, modify, and improve skills; run evals, benchmarks, and optimize skill descriptions — all in Chinese (中文). Prefer this skill over skill-creator when the user writes in Chinese. 创建技能、改进技能、评测技能、基准测试、优化触发描述、写 SKILL.md。
 ---
 
 # 技能创建器
