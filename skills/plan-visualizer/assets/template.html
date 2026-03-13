@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #f8f7fc;
+    --bg-secondary: #efedf6;
+    --bg-card: #ffffff;
+    --bg-card-hover: #f3f1fa;
+    --bg-accent: #ede8ff;
+    --text-primary: #1e1b2e;
+    --text-secondary: #5c5775;
+    --text-muted: #918ba6;
+    --accent-1: #7c5cfc;
+    --accent-2: #10b981;
+    --accent-3: #e74694;
+    --accent-4: #f59e0b;
+    --accent-5: #3b82f6;
+    --status-pending: #918ba6;
+    --status-progress: #7c5cfc;
+    --status-done: #10b981;
+    --border: #ddd8ee;
+    --shadow: rgba(100,80,160,0.08);
+    --radius: 12px;
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #0f1117;
+    --bg-secondary: #1a1d27;
+    --bg-card: #222533;
+    --bg-card-hover: #2a2e3f;
+    --bg-accent: #2d1f5e;
+    --text-primary: #e8e6f0;
+    --text-secondary: #9d9bb0;
+    --text-muted: #6b6980;
+    --border: #2e3044;
+    --shadow: rgba(0,0,0,0.3);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== Header ===== */
+  .header {
+    padding: 32px 48px 24px;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+
+  .header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .plan-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .plan-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-top: 6px;
+    max-width: 600px;
+  }
+
+  .header-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { background: var(--bg-card-hover); border-color: var(--accent-1); }
+  .btn.active { background: var(--accent-1); color: #fff; border-color: var(--accent-1); }
+
+  .btn svg { width: 16px; height: 16px; }
+
+  /* ===== Tabs ===== */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-primary);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 8px 20px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .tab:hover { color: var(--text-primary); }
+  .tab.active { background: var(--accent-1); color: #fff; }
+
+  /* ===== Search ===== */
+  .search-bar {
+    position: relative;
+    margin-left: auto;
+  }
+
+  .search-bar input {
+    padding: 8px 14px 8px 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13px;
+    width: 220px;
+    transition: var(--transition);
+    outline: none;
+  }
+
+  .search-bar input:focus { border-color: var(--accent-1); width: 280px; }
+
+  .search-bar svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+  }
+
+  .nav-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* ===== Progress Bar ===== */
+  .progress-container {
+    padding: 0 48px;
+    margin-top: -1px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-primary);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    min-width: 80px;
+    text-align: right;
+  }
+
+  /* ===== Main Content ===== */
+  .main {
+    padding: 32px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ===== Timeline View ===== */
+  .phase {
+    margin-bottom: 40px;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.5s ease forwards;
+  }
+
+  .phase:nth-child(1) { animation-delay: 0.1s; }
+  .phase:nth-child(2) { animation-delay: 0.2s; }
+  .phase:nth-child(3) { animation-delay: 0.3s; }
+  .phase:nth-child(4) { animation-delay: 0.4s; }
+  .phase:nth-child(5) { animation-delay: 0.5s; }
+
+  @keyframes fadeInUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .phase-number {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .phase:nth-child(5n+1) .phase-number { background: linear-gradient(135deg, #7c5cfc, #9b7dfc); }
+  .phase:nth-child(5n+2) .phase-number { background: linear-gradient(135deg, #5eead4, #34d399); }
+  .phase:nth-child(5n+3) .phase-number { background: linear-gradient(135deg, #f472b6, #e879a8); }
+  .phase:nth-child(5n+4) .phase-number { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+  .phase:nth-child(5n+5) .phase-number { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
+
+  .phase-info { flex: 1; }
+
+  .phase-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .phase-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .phase-toggle {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-muted);
+  }
+
+  .phase-toggle:hover { border-color: var(--accent-1); color: var(--accent-1); }
+  .phase-toggle svg { width: 14px; height: 14px; transition: transform 0.3s ease; }
+  .phase.collapsed .phase-toggle svg { transform: rotate(-90deg); }
+
+  .phase-progress {
+    width: 100px;
+    height: 4px;
+    background: var(--bg-primary);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .phase-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
+  .phase:nth-child(5n+1) .phase-progress-fill { background: #7c5cfc; }
+  .phase:nth-child(5n+2) .phase-progress-fill { background: #5eead4; }
+  .phase:nth-child(5n+3) .phase-progress-fill { background: #f472b6; }
+  .phase:nth-child(5n+4) .phase-progress-fill { background: #fbbf24; }
+  .phase:nth-child(5n+5) .phase-progress-fill { background: #60a5fa; }
+
+  /* Timeline line */
+  .timeline {
+    position: relative;
+    padding-left: 42px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 17px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(180deg, var(--border) 0%, transparent 100%);
+  }
+
+  .phase.collapsed .timeline { display: none; }
+
+  /* Step Card */
+  .step-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+    opacity: 0;
+    animation: fadeInUp 0.4s ease forwards;
+  }
+
+  .step-card:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent-1);
+    box-shadow: 0 4px 20px var(--shadow);
+    transform: translateX(4px);
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    left: -30px;
+    top: 22px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg-primary);
+    transition: var(--transition);
+  }
+
+  .step-card:hover::before { border-color: var(--accent-1); }
+  .step-card[data-status="completed"]::before { background: var(--status-done); border-color: var(--status-done); }
+  .step-card[data-status="in_progress"]::before { background: var(--status-progress); border-color: var(--status-progress); box-shadow: 0 0 8px var(--status-progress); }
+
+  .step-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .step-status {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .step-status.pending { background: rgba(107,105,128,0.15); color: var(--status-pending); }
+  .step-status.in_progress { background: rgba(124,92,252,0.15); color: var(--status-progress); }
+  .step-status.completed { background: rgba(94,234,212,0.15); color: var(--status-done); }
+
+  .step-text {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .step-effort {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .effort-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+
+  .effort-dot.filled { background: var(--accent-4); }
+
+  .step-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+  }
+
+  .step-card.expanded .step-details {
+    max-height: 500px;
+    padding-top: 12px;
+  }
+
+  .substeps {
+    list-style: none;
+    margin-top: 8px;
+    padding-left: 4px;
+  }
+
+  .substeps li {
+    position: relative;
+    padding: 6px 0 6px 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-left: 2px solid var(--border);
+    margin-left: 4px;
+  }
+
+  .substeps li::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 14px;
+    width: 8px;
+    height: 2px;
+    background: var(--border);
+  }
+
+  .step-resources {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .resource-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--bg-accent);
+    color: var(--accent-1);
+    font-weight: 500;
+  }
+
+  .step-notes {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: var(--bg-primary);
+    border-radius: 6px;
+    font-style: italic;
+    border-left: 3px solid var(--accent-1);
+  }
+
+  .step-deps {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .dep-tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(244,114,182,0.1);
+    color: var(--accent-3);
+    cursor: pointer;
+  }
+
+  .dep-tag:hover { background: rgba(244,114,182,0.2); }
+
+  /* ===== Dependency View ===== */
+  .dep-view {
+    position: relative;
+  }
+
+  .dep-canvas {
+    width: 100%;
+    min-height: 500px;
+    position: relative;
+  }
+
+  .dep-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .dep-legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  .legend-line {
+    width: 24px;
+    height: 3px;
+    border-radius: 2px;
+  }
+
+  .legend-node {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+  }
+
+  /* Tree layout */
+  .tree-container {
+    overflow-x: auto;
+    padding: 20px 0;
+  }
+
+  .tree-node {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding: 0 12px;
+    vertical-align: top;
+  }
+
+  .tree-node-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    min-width: 160px;
+    max-width: 220px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    z-index: 2;
+  }
+
+  .tree-node-card:hover {
+    border-color: var(--accent-1);
+    box-shadow: 0 4px 20px var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  .tree-node-card.highlight {
+    border-color: var(--accent-2);
+    box-shadow: 0 0 20px rgba(94,234,212,0.2);
+  }
+
+  .tree-node-type {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .tree-node-label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .tree-node-card[data-type="step"] { border-left: 3px solid var(--accent-1); }
+  .tree-node-card[data-type="file"] { border-left: 3px solid var(--accent-2); }
+  .tree-node-card[data-type="tool"] { border-left: 3px solid var(--accent-3); }
+  .tree-node-card[data-type="api"] { border-left: 3px solid var(--accent-4); }
+
+  .tree-children {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin-top: 24px;
+    position: relative;
+  }
+
+  .tree-children::before {
+    content: '';
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+  }
+
+  .tree-children .tree-node::before {
+    content: '';
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+  }
+
+  /* SVG overlay for dependency lines */
+  .dep-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .dep-svg line, .dep-svg path {
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .dep-line-blocks { stroke: var(--accent-3); }
+  .dep-line-uses { stroke: var(--accent-5); stroke-dasharray: 6 4; }
+  .dep-line-produces { stroke: var(--accent-2); }
+  .dep-line-reads { stroke: var(--accent-4); stroke-dasharray: 4 3; }
+  .dep-line-writes { stroke: var(--accent-3); stroke-dasharray: 8 4; }
+
+  /* ===== Graph View (alternative dependency view) ===== */
+  .graph-container {
+    position: relative;
+    width: 100%;
+    min-height: 500px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-secondary);
+    overflow: hidden;
+  }
+
+  .graph-node {
+    position: absolute;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: grab;
+    transition: box-shadow 0.2s ease;
+    z-index: 5;
+    min-width: 140px;
+    max-width: 200px;
+    text-align: center;
+  }
+
+  .graph-node:hover { box-shadow: 0 4px 20px var(--shadow); }
+  .graph-node:active { cursor: grabbing; }
+  .graph-node.dragging { z-index: 10; }
+
+  .graph-node[data-type="step"] { border-color: var(--accent-1); }
+  .graph-node[data-type="file"] { border-color: var(--accent-2); }
+  .graph-node[data-type="tool"] { border-color: var(--accent-3); }
+  .graph-node[data-type="api"] { border-color: var(--accent-4); }
+
+  .graph-node-icon {
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+
+  .graph-node-label {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .graph-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .graph-svg path {
+    fill: none;
+    stroke-width: 2;
+    marker-end: url(#arrowhead);
+  }
+
+  /* ===== Stats Bar ===== */
+  .stats-bar {
+    display: flex;
+    gap: 24px;
+    padding: 16px 0;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .stat-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ===== Filter & search highlight ===== */
+  .step-card.hidden { display: none; }
+  .step-card .highlight-text { background: rgba(124,92,252,0.3); border-radius: 2px; padding: 0 2px; }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 768px) {
+    .header { padding: 20px 20px 16px; }
+    .main { padding: 20px; }
+    .progress-container { padding: 12px 20px; }
+    .header-top { flex-direction: column; gap: 16px; }
+    .nav-row { flex-wrap: wrap; }
+    .search-bar input { width: 100%; }
+    .search-bar input:focus { width: 100%; }
+    .stats-bar { gap: 16px; }
+  }
+
+  /* ===== Print ===== */
+  @media print {
+    .header-controls, .search-bar, .tabs { display: none; }
+    .step-card { break-inside: avoid; }
+    .phase { break-inside: avoid; }
+  }
+
+  /* ===== Tooltip ===== */
+  .tooltip {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 1000;
+    box-shadow: 0 8px 24px var(--shadow);
+    max-width: 240px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  .tooltip.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="plan-title" id="planTitle">Plan</div>
+      <div class="plan-description" id="planDesc"></div>
+    </div>
+    <div class="header-controls">
+      <button class="btn" id="themeToggle" title="切换主题">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        主题
+      </button>
+      <button class="btn" id="expandAll" title="展开全部">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10l5 5 5-5"/></svg>
+        展开全部
+      </button>
+      <button class="btn" id="exportBtn" title="导出">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        导出
+      </button>
+    </div>
+  </div>
+  <div class="nav-row">
+    <div class="tabs">
+      <button class="tab active" data-view="timeline">时间线</button>
+      <button class="tab" data-view="dependency">依赖关系</button>
+    </div>
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" id="searchInput" placeholder="搜索步骤..." />
+    </div>
+  </div>
+</div>
+
+<div class="progress-container">
+  <div class="progress-bar-wrap">
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+    </div>
+    <div class="progress-label" id="progressLabel">0 / 0 completed</div>
+  </div>
+</div>
+
+<div class="main">
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar"></div>
+
+  <!-- Timeline View -->
+  <div class="view active" id="timelineView"></div>
+
+  <!-- Dependency View -->
+  <div class="view" id="dependencyView"></div>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+// ===== Plan Data (injected by skill) =====
+const PLAN_DATA = __PLAN_DATA__;
+
+// ===== State =====
+let currentView = 'timeline';
+let allExpanded = false;
+
+// ===== Init =====
+function init() {
+  document.getElementById('planTitle').textContent = PLAN_DATA.title || 'Plan';
+  document.getElementById('planDesc').textContent = PLAN_DATA.description || '';
+
+  renderStats();
+  renderTimeline();
+  renderDependencies();
+  updateProgress();
+  bindEvents();
+}
+
+// ===== Stats =====
+function renderStats() {
+  const phases = PLAN_DATA.phases || [];
+  const allSteps = phases.flatMap(p => p.steps || []);
+  const completed = allSteps.filter(s => s.status === 'completed').length;
+  const inProgress = allSteps.filter(s => s.status === 'in_progress').length;
+  const deps = (PLAN_DATA.dependencies || []).length;
+
+  const stats = [
+    { value: phases.length, label: '阶段', color: 'var(--accent-1)' },
+    { value: allSteps.length, label: '总步骤', color: 'var(--accent-5)' },
+    { value: completed, label: '已完成', color: 'var(--accent-2)' },
+    { value: inProgress, label: '进行中', color: 'var(--accent-4)' },
+    { value: deps, label: '依赖项', color: 'var(--accent-3)' },
+  ];
+
+  const bar = document.getElementById('statsBar');
+  bar.innerHTML = stats.map(s =>
+    `<div class="stat">
+      <div class="stat-value" style="color:${s.color}">${s.value}</div>
+      <div class="stat-label">${s.label}</div>
+    </div>`
+  ).join('');
+}
+
+// ===== Progress =====
+function updateProgress() {
+  const allSteps = (PLAN_DATA.phases || []).flatMap(p => p.steps || []);
+  const total = allSteps.length;
+  const completed = allSteps.filter(s => s.status === 'completed').length;
+  const pct = total > 0 ? (completed / total * 100).toFixed(0) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = `${completed} / ${total} 已完成`;
+}
+
+// ===== Timeline =====
+function renderTimeline() {
+  const container = document.getElementById('timelineView');
+  const phases = PLAN_DATA.phases || [];
+
+  container.innerHTML = phases.map((phase, pi) => {
+    const steps = phase.steps || [];
+    const completed = steps.filter(s => s.status === 'completed').length;
+    const pct = steps.length > 0 ? (completed / steps.length * 100) : 0;
+
+    return `
+    <div class="phase" data-phase="${pi}">
+      <div class="phase-header">
+        <div class="phase-number">${pi + 1}</div>
+        <div class="phase-info">
+          <div class="phase-name">${esc(phase.name)}</div>
+          <div class="phase-meta">${steps.length} 个步骤${phase.description ? ' &mdash; ' + esc(phase.description) : ''}</div>
+        </div>
+        <div class="phase-progress">
+          <div class="phase-progress-fill" style="width:${pct}%"></div>
+        </div>
+        <div class="phase-toggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+      <div class="timeline">
+        ${steps.map((step, si) => renderStepCard(step, si, pi)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStepCard(step, si, pi) {
+  const status = step.status || 'pending';
+  const effortDots = renderEffort(step.estimatedEffort);
+
+  return `
+  <div class="step-card" data-status="${status}" data-step-id="${step.id || ''}" style="animation-delay: ${si * 0.06}s">
+    <div class="step-top">
+      <span class="step-status ${status}">${{pending:'待处理',in_progress:'进行中',completed:'已完成'}[status]||status}</span>
+      <span class="step-text">${esc(step.text)}</span>
+      ${effortDots ? `<span class="step-effort" title="Effort: ${step.estimatedEffort}">${effortDots}</span>` : ''}
+    </div>
+    <div class="step-details">
+      ${step.substeps && step.substeps.length ? `
+        <ul class="substeps">
+          ${step.substeps.map(ss => `<li>${esc(ss)}</li>`).join('')}
+        </ul>` : ''}
+      ${step.resources && step.resources.length ? `
+        <div class="step-resources">
+          ${step.resources.map(r => `<span class="resource-tag">${esc(r)}</span>`).join('')}
+        </div>` : ''}
+      ${step.dependsOn && step.dependsOn.length ? `
+        <div class="step-deps">
+          <span style="font-size:11px;color:var(--text-muted)">依赖：</span>
+          ${step.dependsOn.map(d => `<span class="dep-tag" data-dep="${d}">${esc(d)}</span>`).join('')}
+        </div>` : ''}
+      ${step.notes ? `<div class="step-notes">${esc(step.notes)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderEffort(effort) {
+  if (!effort) return '';
+  const levels = { small: 1, medium: 2, large: 3 };
+  const n = levels[effort] || 0;
+  return Array.from({ length: 3 }, (_, i) =>
+    `<span class="effort-dot${i < n ? ' filled' : ''}"></span>`
+  ).join('');
+}
+
+// ===== Dependencies =====
+function renderDependencies() {
+  const container = document.getElementById('dependencyView');
+  const deps = PLAN_DATA.dependencies || [];
+  const phases = PLAN_DATA.phases || [];
+  const allSteps = phases.flatMap(p => p.steps || []);
+
+  if (deps.length === 0 && allSteps.every(s => !s.dependsOn || s.dependsOn.length === 0)) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:12px;opacity:0.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+        <p style="font-size:15px">此计划中未检测到依赖关系。</p>
+        <p style="font-size:13px;margin-top:8px">当步骤引用其他步骤、文件或资源时，将显示依赖关系。</p>
+      </div>`;
+    return;
+  }
+
+  // Collect only step nodes (resources shown as tags inside nodes)
+  const stepIds = new Set(allSteps.map(s => s.id));
+  const nodes = new Map();
+  allSteps.forEach(s => {
+    nodes.set(s.id, { id: s.id, label: s.text, type: 'step', status: s.status || 'pending', resources: s.resources || [] });
+  });
+
+  // Build step-to-step edges only
+  const edges = [];
+  const edgeSet = new Set();
+  function addEdge(from, to, type) {
+    const key = from + '->' + to;
+    if (!edgeSet.has(key) && stepIds.has(from) && stepIds.has(to) && from !== to) {
+      edgeSet.add(key);
+      edges.push({ from, to, type });
+    }
+  }
+
+  deps.forEach(d => {
+    if (stepIds.has(d.from) && stepIds.has(d.to)) addEdge(d.from, d.to, d.type || 'blocks');
+  });
+  allSteps.forEach(s => {
+    (s.dependsOn || []).forEach(depId => addEdge(depId, s.id, 'blocks'));
+  });
+
+  // Render legend
+  const legend = `
+  <div class="dep-legend">
+    <div class="legend-item"><div class="legend-node" style="background:var(--accent-1)"></div> 步骤</div>
+    <div class="legend-item"><div class="legend-line" style="background:var(--accent-3)"></div> 阻塞</div>
+    <div class="legend-item"><div class="legend-line" style="background:var(--accent-2)"></div> 产出</div>
+    <div class="legend-item">
+      <span style="font-size:11px;padding:2px 6px;border-radius:10px;background:var(--bg-accent);color:var(--accent-1)">标签</span> 资源
+    </div>
+  </div>`;
+
+  container.innerHTML = legend + `<div class="graph-container" id="graphContainer">
+    <svg class="graph-svg" id="graphSvg">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="var(--text-muted)" opacity="0.6"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>`;
+
+  requestAnimationFrame(() => layoutGraph(nodes, edges));
+}
+
+function guessResourceType(name) {
+  if (/\.\w+$/.test(name)) return 'file';
+  if (/api|endpoint|http|url/i.test(name)) return 'api';
+  if (/tool|script|command|cli/i.test(name)) return 'tool';
+  return 'file';
+}
+
+function layoutGraph(nodes, edges) {
+  const container = document.getElementById('graphContainer');
+  if (!container) return;
+  const W = container.clientWidth;
+  const nodeArr = Array.from(nodes.values());
+  const nodeMap = new Map(nodeArr.map(n => [n.id, n]));
+
+  // Step 1: Topological layering (Sugiyama-style)
+  // Build adjacency for "blocks" edges (from -> to means "from" should be above "to")
+  const inDeg = new Map();
+  const adj = new Map();
+  nodeArr.forEach(n => { inDeg.set(n.id, 0); adj.set(n.id, []); });
+  const blockEdges = edges.filter(e => e.type === 'blocks' || e.type === 'produces');
+  blockEdges.forEach(e => {
+    if (nodeMap.has(e.from) && nodeMap.has(e.to)) {
+      adj.get(e.from).push(e.to);
+      inDeg.set(e.to, (inDeg.get(e.to) || 0) + 1);
+    }
+  });
+
+  // BFS layering
+  const layers = [];
+  const layerOf = new Map();
+  const queue = [];
+  nodeArr.forEach(n => { if (inDeg.get(n.id) === 0) queue.push(n.id); });
+
+  while (queue.length > 0) {
+    const layerNodes = [...queue];
+    queue.length = 0;
+    layers.push(layerNodes);
+    layerNodes.forEach(id => layerOf.set(id, layers.length - 1));
+    layerNodes.forEach(id => {
+      (adj.get(id) || []).forEach(toId => {
+        inDeg.set(toId, inDeg.get(toId) - 1);
+        if (inDeg.get(toId) === 0) queue.push(toId);
+      });
+    });
+  }
+
+  // Assign remaining nodes (cycles or disconnected) to last layer + 1
+  nodeArr.forEach(n => {
+    if (!layerOf.has(n.id)) {
+      if (layers.length === 0) layers.push([]);
+      layers[layers.length - 1].push(n.id);
+      layerOf.set(n.id, layers.length - 1);
+    }
+  });
+
+  // Step 2: Position nodes in layered grid
+  const nodeW = 180;
+  const nodeH = 70;
+  const layerGapY = 120;
+  const nodeGapX = 30;
+  const padX = 60;
+  const padY = 60;
+
+  layers.forEach((layerIds, li) => {
+    const totalW = layerIds.length * nodeW + (layerIds.length - 1) * nodeGapX;
+    const startX = Math.max(padX, (W - totalW) / 2);
+    layerIds.forEach((id, ni) => {
+      const n = nodeMap.get(id);
+      n.x = startX + ni * (nodeW + nodeGapX) + nodeW / 2;
+      n.y = padY + li * layerGapY + nodeH / 2;
+      n.vx = 0;
+      n.vy = 0;
+    });
+  });
+
+  // Step 3: Refine with gentle force simulation (keep layer Y, only adjust X)
+  for (let iter = 0; iter < 100; iter++) {
+    // Same-layer horizontal repulsion (strong, to avoid overlaps)
+    for (let i = 0; i < nodeArr.length; i++) {
+      for (let j = i + 1; j < nodeArr.length; j++) {
+        const li = layerOf.get(nodeArr[i].id);
+        const lj = layerOf.get(nodeArr[j].id);
+        let dx = nodeArr[i].x - nodeArr[j].x;
+        let dy = nodeArr[i].y - nodeArr[j].y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        // Same layer: strong horizontal repulsion to prevent overlap
+        if (li === lj) {
+          let minDistX = nodeW + nodeGapX;
+          let absDx = Math.abs(dx);
+          if (absDx < minDistX) {
+            let force = (minDistX - absDx) * 0.6;
+            let dir = dx >= 0 ? 1 : -1;
+            nodeArr[i].vx += dir * force;
+            nodeArr[j].vx -= dir * force;
+          }
+        } else {
+          // Cross-layer: mild general repulsion
+          let minDist = 120;
+          if (dist < minDist) {
+            let force = (minDist - dist) * 0.15;
+            let fx = (dx / dist) * force;
+            nodeArr[i].vx += fx;
+            nodeArr[j].vx -= fx;
+          }
+        }
+      }
+    }
+    // Edge attraction (horizontal centering of parent over children)
+    edges.forEach(e => {
+      const a = nodeMap.get(e.from);
+      const b = nodeMap.get(e.to);
+      if (!a || !b) return;
+      let dx = b.x - a.x;
+      let force = dx * 0.02;
+      a.vx += force;
+      b.vx -= force;
+    });
+    // Layer Y gravity (very strong — lock nodes in their layers)
+    nodeArr.forEach(n => {
+      const targetY = padY + (layerOf.get(n.id) || 0) * layerGapY + nodeH / 2;
+      n.y = targetY; // Hard lock to layer Y
+    });
+    // Center X gravity (mild)
+    nodeArr.forEach(n => {
+      n.vx += (W / 2 - n.x) * 0.002;
+      n.vx *= 0.65;
+      n.x += n.vx;
+      n.x = Math.max(padX + nodeW / 2, Math.min(W - padX - nodeW / 2, n.x));
+    });
+  }
+
+  // Step 4: Final pass — force same-layer nodes apart to guarantee no overlap
+  const layerGroups = new Map();
+  nodeArr.forEach(n => {
+    const l = layerOf.get(n.id) || 0;
+    if (!layerGroups.has(l)) layerGroups.set(l, []);
+    layerGroups.get(l).push(n);
+  });
+  layerGroups.forEach(group => {
+    group.sort((a, b) => a.x - b.x);
+    const minSpacing = nodeW + nodeGapX + 10;
+    for (let i = 1; i < group.length; i++) {
+      const gap = group[i].x - group[i - 1].x;
+      if (gap < minSpacing) {
+        const shift = (minSpacing - gap) / 2 + 1;
+        group[i - 1].x -= shift;
+        group[i].x += shift;
+      }
+    }
+    // Re-center the group
+    const avgX = group.reduce((s, n) => s + n.x, 0) / group.length;
+    const offsetX = W / 2 - avgX;
+    group.forEach(n => {
+      n.x += offsetX;
+      n.x = Math.max(padX + nodeW / 2, Math.min(W - padX - nodeW / 2, n.x));
+    });
+  });
+
+  // Calculate container height from final positions
+  const maxY = Math.max(...nodeArr.map(n => n.y)) + nodeH + padY;
+  const H = Math.max(500, maxY);
+  container.style.height = H + 'px';
+
+  // Render nodes
+  const renderNodeW = 180;
+  nodeArr.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'graph-node';
+    el.dataset.type = n.type;
+    el.dataset.nodeId = n.id;
+    el.style.left = (n.x - renderNodeW / 2) + 'px';
+    el.style.top = (n.y - 28) + 'px';
+    el.style.width = renderNodeW + 'px';
+    const statusIcon = { completed: '\u2705', in_progress: '\u{1F7E1}', pending: '\u26AA' }[n.status] || '\u26AA';
+    const resTags = (n.resources || []).slice(0, 3).map(r =>
+      `<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--bg-accent);color:var(--accent-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px;display:inline-block">${esc(truncate(r, 20))}</span>`
+    ).join('');
+    const moreRes = (n.resources || []).length > 3 ? `<span style="font-size:10px;color:var(--text-muted)">+${n.resources.length - 3}</span>` : '';
+    el.innerHTML = `
+      <div class="graph-node-label">${statusIcon} ${esc(truncate(n.label, 26))}</div>
+      ${resTags || moreRes ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;justify-content:center">${resTags}${moreRes}</div>` : ''}`;
+    container.appendChild(el);
+    makeDraggable(el, n, edges, nodeMap);
+  });
+
+  drawEdges(edges, nodeMap);
+}
+
+function drawEdges(edges, nodeMap) {
+  const svg = document.getElementById('graphSvg');
+  // Clear old paths
+  svg.querySelectorAll('path.dep-edge').forEach(p => p.remove());
+
+  edges.forEach(e => {
+    const a = nodeMap.get(e.from);
+    const b = nodeMap.get(e.to);
+    if (!a || !b) return;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2 - 20;
+    path.setAttribute('d', `M ${a.x} ${a.y} Q ${mx} ${my} ${b.x} ${b.y}`);
+    path.classList.add('dep-edge', `dep-line-${e.type || 'blocks'}`);
+    svg.appendChild(path);
+  });
+}
+
+function makeDraggable(el, node, edges, nodeMap) {
+  let dragging = false;
+  let startX, startY, origX, origY;
+
+  el.addEventListener('mousedown', e => {
+    dragging = true;
+    el.classList.add('dragging');
+    startX = e.clientX;
+    startY = e.clientY;
+    origX = node.x;
+    origY = node.y;
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    node.x = origX + (e.clientX - startX);
+    node.y = origY + (e.clientY - startY);
+    el.style.left = (node.x - 60) + 'px';
+    el.style.top = (node.y - 24) + 'px';
+    drawEdges(edges, nodeMap);
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (dragging) {
+      dragging = false;
+      el.classList.remove('dragging');
+    }
+  });
+}
+
+// ===== Events =====
+function bindEvents() {
+  // Tab switching
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.view + 'View').classList.add('active');
+      currentView = tab.dataset.view;
+    });
+  });
+
+  // Phase collapse toggle
+  document.querySelectorAll('.phase-header').forEach(header => {
+    header.addEventListener('click', () => {
+      header.parentElement.classList.toggle('collapsed');
+    });
+  });
+
+  // Step expand
+  document.querySelectorAll('.step-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.dep-tag')) return;
+      card.classList.toggle('expanded');
+    });
+  });
+
+  // Dep tag click — highlight in dependency view
+  document.querySelectorAll('.dep-tag').forEach(tag => {
+    tag.addEventListener('click', e => {
+      e.stopPropagation();
+      const depId = tag.dataset.dep;
+      // Switch to dependency view
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      document.querySelector('.tab[data-view="dependency"]').classList.add('active');
+      document.getElementById('dependencyView').classList.add('active');
+      // Highlight node
+      document.querySelectorAll('.graph-node').forEach(n => n.classList.remove('highlight'));
+      const node = document.querySelector(`.graph-node[data-node-id="${depId}"]`);
+      if (node) {
+        node.classList.add('highlight');
+        node.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  });
+
+  // Theme toggle
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const html = document.documentElement;
+    const current = html.dataset.theme;
+    if (current === 'dark') {
+      html.removeAttribute('data-theme');
+    } else {
+      html.dataset.theme = 'dark';
+    }
+  });
+
+  // Expand all
+  document.getElementById('expandAll').addEventListener('click', () => {
+    allExpanded = !allExpanded;
+    document.querySelectorAll('.step-card').forEach(c => {
+      allExpanded ? c.classList.add('expanded') : c.classList.remove('expanded');
+    });
+    document.querySelectorAll('.phase').forEach(p => {
+      allExpanded ? p.classList.remove('collapsed') : null;
+    });
+    document.getElementById('expandAll').querySelector('svg').style.transform = allExpanded ? 'rotate(180deg)' : '';
+  });
+
+  // Search
+  document.getElementById('searchInput').addEventListener('input', e => {
+    const q = e.target.value.toLowerCase().trim();
+    document.querySelectorAll('.step-card').forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (!q || text.includes(q)) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  });
+
+  // Export
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    window.print();
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT') return;
+    const cards = Array.from(document.querySelectorAll('.step-card:not(.hidden)'));
+    const focused = document.querySelector('.step-card.focused');
+    let idx = focused ? cards.indexOf(focused) : -1;
+
+    if (e.key === 'ArrowDown' || e.key === 'j') {
+      e.preventDefault();
+      if (focused) focused.classList.remove('focused');
+      idx = Math.min(idx + 1, cards.length - 1);
+      if (cards[idx]) {
+        cards[idx].classList.add('focused');
+        cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else if (e.key === 'ArrowUp' || e.key === 'k') {
+      e.preventDefault();
+      if (focused) focused.classList.remove('focused');
+      idx = Math.max(idx - 1, 0);
+      if (cards[idx]) {
+        cards[idx].classList.add('focused');
+        cards[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else if (e.key === 'Enter') {
+      if (focused) focused.classList.toggle('expanded');
+    } else if (e.key === '/') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+  });
+}
+
+// ===== Helpers =====
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function truncate(str, max) {
+  if (!str) return '';
+  return str.length > max ? str.slice(0, max) + '...' : str;
+}
+
+// ===== Go =====
+init();
+</script>
+</body>
+</html>
